@@ -19,8 +19,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
     addToCart(product);
   };
 
-  const discountPercentage = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const originalPrice = product.originalPrice || product.original_price;
+  const discountPercentage = originalPrice 
+    ? Math.round(((originalPrice - product.price) / originalPrice) * 100)
     : 0;
 
   return (
@@ -30,7 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
     >
       <div className="relative overflow-hidden">
         <img
-          src={product.image}
+          src={product.image || product.image_url}
           alt={product.name}
           className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
         />
@@ -42,7 +43,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
               -{discountPercentage}%
             </Badge>
           )}
-          {!product.inStock && (
+          {(product.inStock === false || (product.stock_quantity !== undefined && product.stock_quantity <= 0)) && (
             <Badge variant="secondary" className="text-xs">
               Out of Stock
             </Badge>
@@ -66,10 +67,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
             size="sm"
             className="w-full"
             onClick={handleAddToCart}
-            disabled={!product.inStock}
+            disabled={product.inStock === false || (product.stock_quantity !== undefined && product.stock_quantity <= 0)}
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
-            {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+            {(product.inStock !== false && (product.stock_quantity === undefined || product.stock_quantity > 0)) ? 'Add to Cart' : 'Out of Stock'}
           </Button>
         </div>
       </div>
@@ -78,12 +79,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
         {/* Category and Rating */}
         <div className="flex items-center justify-between">
           <Badge variant="outline" className="text-xs">
-            {product.category}
+            {product.category || 'General'}
           </Badge>
           <div className="flex items-center space-x-1">
             <Star className="h-4 w-4 fill-accent text-accent" />
             <span className="text-sm font-medium">{product.rating}</span>
-            <span className="text-xs text-muted-foreground">({product.reviews})</span>
+            <span className="text-xs text-muted-foreground">({product.reviews || product.review_count})</span>
           </div>
         </div>
 
@@ -102,9 +103,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
           <span className="text-lg font-bold text-primary">
             ${product.price.toFixed(2)}
           </span>
-          {product.originalPrice && (
+          {originalPrice && (
             <span className="text-sm text-muted-foreground line-through">
-              ${product.originalPrice.toFixed(2)}
+              ${originalPrice.toFixed(2)}
             </span>
           )}
         </div>

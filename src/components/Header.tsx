@@ -112,15 +112,20 @@ export const Header: React.FC<HeaderProps> = ({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                      <AvatarImage 
+                        src={user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} 
+                        alt={user.user_metadata?.full_name || user.email} 
+                      />
+                      <AvatarFallback>
+                        {(user.user_metadata?.full_name || user.email).charAt(0).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user.name}</p>
+                      <p className="font-medium">{user.user_metadata?.full_name || user.email}</p>
                       <p className="w-[200px] truncate text-sm text-muted-foreground">
                         {user.email}
                       </p>

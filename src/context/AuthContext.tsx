@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '@/types/product';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface AuthContextType {
-  user: User | null;
+  user: SupabaseUser | null;
+  session: Session | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => void;
@@ -21,87 +23,100 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
-  }, []);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (event === 'SIGNED_IN') {
+          toast.success('Successfully logged in!');
+        } else if (event === 'SIGNED_OUT') {
+          toast.success('Successfully logged out');
+        }
+      }
+    );
 
-  // Save user to localStorage whenever user changes
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-  }, [user]);
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // For demo purposes, accept any email/password combination
-    if (email && password) {
-      const mockUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
         email,
-        name: email.split('@')[0],
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-      };
-      
-      setUser(mockUser);
-      toast.success('Successfully logged in!');
+        password,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setIsLoading(false);
+        return false;
+      }
+
       setIsLoading(false);
       return true;
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+      setIsLoading(false);
+      return false;
     }
-    
-    toast.error('Invalid credentials');
-    setIsLoading(false);
-    return false;
   };
 
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (email && password && name) {
-      const mockUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
-        name,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-      };
+    try {
+      const redirectUrl = `${window.location.origin}/`;
       
-      setUser(mockUser);
-      toast.success('Account created successfully!');
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: name,
+          }
+        }
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setIsLoading(false);
+        return false;
+      }
+
+      toast.success('Account created successfully! Please check your email to verify your account.');
       setIsLoading(false);
       return true;
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+      setIsLoading(false);
+      return false;
     }
-    
-    toast.error('Please fill in all fields');
-    setIsLoading(false);
-    return false;
   };
 
-  const logout = () => {
-    setUser(null);
-    toast.success('Successfully logged out');
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
     <AuthContext.Provider 
       value={{
         user,
+        session,
         login,
         register,
         logout,

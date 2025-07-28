@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, Lock, MapPin, User, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -17,13 +18,13 @@ interface CheckoutModalProps {
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose }) => {
   const { items, totalPrice, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   
   const [shippingInfo, setShippingInfo] = useState({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ')[1] || '',
+    firstName: user?.user_metadata?.full_name?.split(' ')[0] || '',
+    lastName: user?.user_metadata?.full_name?.split(' ')[1] || '',
     email: user?.email || '',
     address: '',
     city: '',
@@ -41,21 +42,53 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsProcessing(true);
-
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    setIsProcessing(false);
-    setOrderComplete(true);
-    clearCart();
-    toast.success('Order placed successfully!');
     
-    // Close modal after showing success
-    setTimeout(() => {
-      setOrderComplete(false);
-      onClose();
-    }, 3000);
+    if (!user || !session) {
+      toast.error('Please log in to complete your purchase');
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      // Prepare order data
+      const orderItems = items.map(item => ({
+        id: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity,
+      }));
+
+      const shippingAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} ${shippingInfo.zipCode}, ${shippingInfo.country}`;
+
+      // Call create-payment edge function
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: {
+          items: orderItems,
+          shipping_address: shippingAddress,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+        clearCart();
+        onClose();
+        toast.success('Redirecting to payment...');
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Failed to process payment. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleClose = () => {
