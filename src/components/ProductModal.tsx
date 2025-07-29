@@ -39,6 +39,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                 src={product.image}
                 alt={product.name}
                 className="w-full h-96 object-cover rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.src = '/placeholder.svg';
+                }}
               />
               {discountPercentage > 0 && (
                 <Badge variant="destructive" className="absolute top-4 left-4">

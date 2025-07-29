@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, Lock, MapPin, User, CheckCircle } from 'lucide-react';
+import { CreditCard, Lock, MapPin, User, CheckCircle, Smartphone, Banknote } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -33,6 +33,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
     country: 'United States'
   });
 
+  const [paymentMode, setPaymentMode] = useState('stripe');
+  
   const [paymentInfo, setPaymentInfo] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -51,7 +53,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
     setIsProcessing(true);
     
     try {
-      // Prepare order data
+      if (paymentMode === 'cod') {
+        // Handle Cash on Delivery
+        toast.success('Order placed successfully! You will pay on delivery.');
+        clearCart();
+        setOrderComplete(true);
+        return;
+      }
+      
+      if (paymentMode === 'gpay' || paymentMode === 'phonepe') {
+        // Handle digital wallet payments
+        toast.success(`Redirecting to ${paymentMode === 'gpay' ? 'Google Pay' : 'PhonePe'}...`);
+        clearCart();
+        setOrderComplete(true);
+        return;
+      }
+      
+      // Handle Stripe payment
       const orderItems = items.map(item => ({
         id: item.product.id,
         name: item.product.name,
@@ -61,11 +79,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
 
       const shippingAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} ${shippingInfo.zipCode}, ${shippingInfo.country}`;
 
-      // Call create-payment edge function
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           items: orderItems,
           shipping_address: shippingAddress,
+          payment_mode: paymentMode,
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -75,7 +93,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
       if (error) throw error;
 
       if (data?.url) {
-        // Open Stripe checkout in a new tab
         window.open(data.url, '_blank');
         clearCart();
         onClose();
@@ -213,66 +230,133 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                 </CardContent>
               </Card>
 
-              {/* Payment Information */}
+              {/* Payment Method Selection */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Lock className="h-4 w-4" />
-                    <span>Payment Information</span>
+                    <span>Payment Method</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="nameOnCard">Name on Card</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        id="nameOnCard"
-                        className="pl-10"
-                        value={paymentInfo.nameOnCard}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, nameOnCard: e.target.value})}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="cardNumber">Card Number</Label>
-                    <div className="relative">
-                      <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        id="cardNumber"
-                        className="pl-10"
-                        placeholder="1234 5678 9012 3456"
-                        value={paymentInfo.cardNumber}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, cardNumber: e.target.value})}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="expiryDate">Expiry Date</Label>
-                      <Input
-                        id="expiryDate"
-                        placeholder="MM/YY"
-                        value={paymentInfo.expiryDate}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, expiryDate: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="cvv">CVV</Label>
-                      <Input
-                        id="cvv"
-                        placeholder="123"
-                        value={paymentInfo.cvv}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, cvv: e.target.value})}
-                        required
-                      />
-                    </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode('stripe')}
+                      className={`p-4 border rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                        paymentMode === 'stripe' 
+                          ? 'border-primary bg-primary/5 text-primary' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <CreditCard className="h-6 w-6" />
+                      <span className="text-sm font-medium">Card</span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode('gpay')}
+                      className={`p-4 border rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                        paymentMode === 'gpay' 
+                          ? 'border-primary bg-primary/5 text-primary' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <Smartphone className="h-6 w-6" />
+                      <span className="text-sm font-medium">GPay</span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode('phonepe')}
+                      className={`p-4 border rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                        paymentMode === 'phonepe' 
+                          ? 'border-primary bg-primary/5 text-primary' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <Smartphone className="h-6 w-6" />
+                      <span className="text-sm font-medium">PhonePe</span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode('cod')}
+                      className={`p-4 border rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                        paymentMode === 'cod' 
+                          ? 'border-primary bg-primary/5 text-primary' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <Banknote className="h-6 w-6" />
+                      <span className="text-sm font-medium">Cash on Delivery</span>
+                    </button>
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Payment Information - Only show for Stripe */}
+              {paymentMode === 'stripe' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <CreditCard className="h-4 w-4" />
+                      <span>Card Information</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="nameOnCard">Name on Card</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          id="nameOnCard"
+                          className="pl-10"
+                          value={paymentInfo.nameOnCard}
+                          onChange={(e) => setPaymentInfo({...paymentInfo, nameOnCard: e.target.value})}
+                          required={paymentMode === 'stripe'}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="cardNumber">Card Number</Label>
+                      <div className="relative">
+                        <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          id="cardNumber"
+                          className="pl-10"
+                          placeholder="1234 5678 9012 3456"
+                          value={paymentInfo.cardNumber}
+                          onChange={(e) => setPaymentInfo({...paymentInfo, cardNumber: e.target.value})}
+                          required={paymentMode === 'stripe'}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="expiryDate">Expiry Date</Label>
+                        <Input
+                          id="expiryDate"
+                          placeholder="MM/YY"
+                          value={paymentInfo.expiryDate}
+                          onChange={(e) => setPaymentInfo({...paymentInfo, expiryDate: e.target.value})}
+                          required={paymentMode === 'stripe'}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cvv">CVV</Label>
+                        <Input
+                          id="cvv"
+                          placeholder="123"
+                          value={paymentInfo.cvv}
+                          onChange={(e) => setPaymentInfo({...paymentInfo, cvv: e.target.value})}
+                          required={paymentMode === 'stripe'}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Right Column - Order Summary */}
@@ -332,7 +416,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                     size="lg"
                     disabled={isProcessing}
                   >
-                    {isProcessing ? 'Processing...' : `Pay $${(totalPrice * 1.08).toFixed(2)}`}
+                    {isProcessing ? 'Processing...' : 
+                     paymentMode === 'cod' ? 'Place Order (COD)' :
+                     paymentMode === 'gpay' ? 'Pay with GPay' :
+                     paymentMode === 'phonepe' ? 'Pay with PhonePe' :
+                     `Pay $${(totalPrice * 1.08).toFixed(2)}`}
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">
