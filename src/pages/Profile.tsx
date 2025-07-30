@@ -172,7 +172,7 @@ export default function Profile() {
     }
   };
 
-  const deleteOrder = async (orderId: string) => {
+  const cancelOrder = async (orderId: string) => {
     try {
       const { error } = await supabase.rpc('delete_order_with_items', {
         order_id_param: orderId
@@ -183,11 +183,23 @@ export default function Profile() {
       }
 
       setOrders(orders.filter(order => order.id !== orderId));
-      toast.success('Order deleted successfully!');
+      toast.success('Order cancelled successfully!');
     } catch (error: any) {
-      toast.error('Error deleting order: ' + error.message);
+      toast.error('Error cancelling order: ' + error.message);
     }
   };
+
+  // Refresh orders when component mounts or when user navigates back to orders tab
+  const refreshOrders = () => {
+    fetchOrders();
+  };
+
+  useEffect(() => {
+    const searchParamsTab = searchParams.get('tab');
+    if (searchParamsTab === 'orders') {
+      refreshOrders();
+    }
+  }, [searchParams]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -340,10 +352,10 @@ export default function Profile() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => deleteOrder(order.id)}
+                            onClick={() => cancelOrder(order.id)}
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
+                            Cancel Order
                           </Button>
                         </div>
 

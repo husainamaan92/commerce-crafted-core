@@ -57,7 +57,7 @@ const PaymentSuccess = () => {
             </Button>
             
             <Button 
-              onClick={() => navigate('/orders')}
+              onClick={() => navigate('/profile?tab=orders')}
               variant="outline"
               className="w-full"
             >
