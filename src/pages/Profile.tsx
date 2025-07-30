@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Upload, Trash2, Package, Calendar, CreditCard } from 'lucide-react';
+import { Upload, Trash2, Package, Calendar, CreditCard, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface OrderItem {
@@ -50,6 +50,7 @@ interface Profile {
 export default function Profile() {
   const { user, logout } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -208,7 +209,13 @@ export default function Profile() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Profile</h1>
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <h1 className="text-3xl font-bold">Profile</h1>
+        </div>
         <Button variant="outline" onClick={logout}>
           Sign Out
         </Button>
