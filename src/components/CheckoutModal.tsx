@@ -380,7 +380,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                           <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                         </div>
                         <div className="text-sm font-medium">
-                          ${(item.product.price * item.quantity).toFixed(2)}
+                          ₹{(item.product.price * item.quantity).toFixed(2)}
                         </div>
                       </div>
                     ))}
@@ -392,7 +392,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Subtotal</span>
-                      <span>${totalPrice.toFixed(2)}</span>
+                      <span>₹{totalPrice.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Shipping</span>
@@ -400,12 +400,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Tax</span>
-                      <span>${(totalPrice * 0.08).toFixed(2)}</span>
+                      <span>₹{(totalPrice * 0.18).toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-semibold">
                       <span>Total</span>
-                      <span className="text-primary">${(totalPrice * 1.08).toFixed(2)}</span>
+                      <span className="text-primary">₹{(totalPrice * 1.18).toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -420,7 +420,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                      paymentMode === 'cod' ? 'Place Order (COD)' :
                      paymentMode === 'gpay' ? 'Pay with GPay' :
                      paymentMode === 'phonepe' ? 'Pay with PhonePe' :
-                     `Pay $${(totalPrice * 1.08).toFixed(2)}`}
+                     `Pay ₹${(totalPrice * 1.18).toFixed(2)}`}
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">

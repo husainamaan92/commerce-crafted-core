@@ -57,7 +57,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ onCheckout }) => {
                     <div className="flex-1 space-y-2">
                       <h4 className="font-medium text-sm line-clamp-2">{item.product.name}</h4>
                       <p className="text-sm font-semibold text-primary">
-                        ${item.product.price.toFixed(2)}
+                        ₹{item.product.price.toFixed(2)}
                       </p>
                       
                       {/* Quantity Controls */}
@@ -102,7 +102,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ onCheckout }) => {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal ({totalItems} items)</span>
-                    <span>${totalPrice.toFixed(2)}</span>
+                    <span>₹{totalPrice.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Shipping</span>
@@ -111,7 +111,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ onCheckout }) => {
                   <Separator />
                   <div className="flex justify-between font-semibold">
                     <span>Total</span>
-                    <span className="text-primary">${totalPrice.toFixed(2)}</span>
+                    <span className="text-primary">₹{totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
                 

@@ -61,11 +61,11 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: items.map((item: any) => ({
         price_data: {
-          currency: "usd",
+          currency: "inr",
           product_data: {
             name: item.name,
           },
-          unit_amount: Math.round(item.price * 100), // Convert to cents
+          unit_amount: Math.round(item.price * 100), // Convert to paise (smallest unit of INR)
         },
         quantity: item.quantity,
       })),

@@ -81,11 +81,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
               {/* Price */}
               <div className="flex items-center space-x-3">
                 <span className="text-3xl font-bold text-primary">
-                  ${product.price.toFixed(2)}
+                  ₹{product.price.toFixed(2)}
                 </span>
                 {product.originalPrice && (
                   <span className="text-lg text-muted-foreground line-through">
-                    ${product.originalPrice.toFixed(2)}
+                    ₹{product.originalPrice.toFixed(2)}
                   </span>
                 )}
               </div>
@@ -172,7 +172,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
             <div className="space-y-3">
               <div className="flex items-center space-x-3 text-sm">
                 <Truck className="h-4 w-4 text-success" />
-                <span>Free shipping on orders over $50</span>
+                <span>Free shipping on orders over ₹4,000</span>
               </div>
               <div className="flex items-center space-x-3 text-sm">
                 <Shield className="h-4 w-4 text-success" />
