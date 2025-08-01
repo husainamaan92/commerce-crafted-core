@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, Lock, MapPin, User, CheckCircle, Smartphone, Banknote } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { AuthModal } from '@/components/AuthModal';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
   const { user, session } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   
   const [shippingInfo, setShippingInfo] = useState({
     firstName: user?.user_metadata?.full_name?.split(' ')[0] || '',
@@ -46,7 +48,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
     e.preventDefault();
     
     if (!user || !session) {
-      toast.error('Please log in to complete your purchase');
+      setShowAuthModal(true);
       return;
     }
 
@@ -433,6 +435,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
           </div>
         </form>
       </DialogContent>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </Dialog>
   );
 };
