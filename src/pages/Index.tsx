@@ -12,6 +12,8 @@ const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   const handleShopNowClick = () => {
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
@@ -20,8 +22,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header
-        onSearchChange={() => {}}
-        onCategoryChange={() => {}}
+        onSearchChange={setSearchTerm}
+        onCategoryChange={setSelectedCategory}
         onAuthClick={() => setIsAuthModalOpen(true)}
       />
       
@@ -37,7 +39,11 @@ const Index = () => {
               </p>
             </div>
             
-            <ProductGridWithData onProductClick={setSelectedProduct} />
+            <ProductGridWithData 
+              onProductClick={setSelectedProduct}
+              searchTerm={searchTerm}
+              selectedCategory={selectedCategory}
+            />
           </div>
         </section>
       </main>
